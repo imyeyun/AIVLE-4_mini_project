@@ -29,22 +29,27 @@ public class ImageService {
      * =======================================================
      */
     @Transactional
-    public String createImage(String tempUrl, Long bookId) {
+    public String createImage(String tempUrl, Long bookId, String baseUrl) {
 
-        Book book = bookRepository.findById(bookId)
-                .orElseThrow(() -> new IllegalArgumentException("책을 찾을 수 없습니다."));
+        // tempUrl 예: "/images/temp_xxx.png"
+        String finalUrl;
 
-        // 이미지 저장 + URL 생성
-        String imageUrl = downloadImageToLocal(tempUrl, bookId);
+        if (tempUrl.startsWith("http")) {
+            finalUrl = tempUrl;
+        } else {
+            finalUrl = baseUrl + tempUrl; // ★ 여기서 IP 포함
+        }
 
-        GeneratedImage img = new GeneratedImage();
-        img.setBook(book);
-        img.setImageUrl(imageUrl);
+        GeneratedImage image = new GeneratedImage();
+        image.setBook(bookRepository.findById(bookId)
+                .orElseThrow(() -> new IllegalArgumentException("책 없음")));
+        image.setImageUrl(finalUrl);
 
-        imageRepository.save(img);
+        imageRepository.save(image);
 
-        return imageUrl; // ⭐ 프론트에 반환할 상대URL (/images/xxx.png)
+        return finalUrl;
     }
+
 
     /**
      * =======================================================
